@@ -96,5 +96,28 @@ describe('OrderProcessor', () => {
                 .not.toHaveBeenCalled();
         });
 
+        test('deve propagar erro quando o gateway de pagamento falhar', async () => {
+            const user = {
+                id: 1,
+                email: 'teste@email.com'
+            };
+
+            paymentGateway.charge.mockRejectedValue(
+                new Error('Timeout')
+            );
+
+            await expect(
+                orderProcessor.processOrder(user, 100)
+            ).rejects.toThrow('Timeout');
+
+            expect(paymentGateway.charge)
+                .toHaveBeenCalledWith(1, 100);
+
+            expect(emailService.sendReceipt)
+                .not.toHaveBeenCalled();
+
+            expect(emailService.sendFailureNotification)
+                .not.toHaveBeenCalled();
+        });
     });
 });
